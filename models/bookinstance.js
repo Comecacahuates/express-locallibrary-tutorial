@@ -1,3 +1,4 @@
+const { DateTime } = require("luxon");
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
@@ -10,13 +11,18 @@ const BookInstanceSchema = new Schema({
     enum: ["Available", "Maintenance", "Loaned", "Reserved"],
     default: "Maintenance",
   },
-  due_back: { type: Date, default: Date.now },
+  due_back: { type: Date, default: Date.now() },
 });
 
 // Virtual for bookinstance's URL
-BookInstanceSchema.virtual("url").get(
-  () => `/catalog/bookinstance/${this._id}`
-);
+BookInstanceSchema.virtual("url").get(function () {
+  return `/catalog/bookinstance/${this._id}`;
+});
+
+// Virtual for formatted due date
+BookInstanceSchema.virtual("due_back_formatted").get(function () {
+  return DateTime.fromJSDate(this.due_back).toLocaleString(DateTime.DATE_MED);
+});
 
 // Export model
 module.exports = mongoose.model("BookInstance", BookInstanceSchema);

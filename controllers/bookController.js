@@ -17,7 +17,7 @@ exports.index = (request, response) => {
       bookinstance_count: (callback) => {
         BookInstance.countDocuments({}, callback);
       },
-      bookinstance_availabe_count: (callback) => {
+      bookinstance_available_count: (callback) => {
         BookInstance.countDocuments({ status: "Available" }, callback);
       },
       author_count: (callback) => {
@@ -49,7 +49,7 @@ exports.book_list = (request, response, next) => {
       }
       response.render("book_list", {
         title: "Book List",
-        book_list: book_list,
+        book_list,
       });
     });
 };
