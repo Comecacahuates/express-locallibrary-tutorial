@@ -1,15 +1,16 @@
-const { nextTick } = require("async");
+const async = require("async");
 const Author = require("../models/author");
+const Book = require("../models/book");
 
 /**
  * Display list of all authors.
  */
-exports.author_list = (request, response) => {
+exports.author_list = (request, response, next) => {
   Author.find()
     .sort([["familiy_name", "ascending"]])
     .exec((error, author_list) => {
       if (error) {
-        return nextTick(error);
+        return next(error);
       }
       response.render("author_list", {
         title: "Author List",
@@ -21,8 +22,32 @@ exports.author_list = (request, response) => {
 /**
  * Display detail page for a specific author.
  */
-exports.author_detail = (request, response) => {
-  response.send(`NOT IMPLEMENTED: Author detail: ${request.params.id}`);
+exports.author_detail = (request, response, next) => {
+  async.parallel(
+    {
+      author: (callback) => Author.findById(request.params.id).exec(callback),
+
+      author_books: (callback) =>
+        Book.find({ author: request.params.id }, "title summary").exec(
+          callback
+        ),
+    },
+
+    (error, results) => {
+      if (error) {
+        return next(error);
+      }
+      if (results.author === null) {
+        const error = new Error("Author not found");
+        error.status = 404;
+        return next(error);
+      }
+      response.render("author_detail", {
+        title: "Author Detail",
+        ...results,
+      });
+    }
+  );
 };
 
 /**
