@@ -1,6 +1,10 @@
 const { response } = require("express");
 const Book = require("../models/book");
 
+exports.index = (request, response) => {
+  response.send("NOT IMPLEMENTED: Site Home Page");
+};
+
 /**
  * Display list of all books.
  */
@@ -12,7 +16,7 @@ exports.book_list = (request, response) => {
  * Display detail page for a specific book.
  */
 exports.book_detail = (request, response) => {
-  response.send(`NOT IMPLEMENTED: Book detaul: ${request.params.id}`);
+  response.send(`NOT IMPLEMENTED: Book detaol: ${request.params.id}`);
 };
 
 /**

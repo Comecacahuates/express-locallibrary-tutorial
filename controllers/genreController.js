@@ -8,6 +8,13 @@ exports.genre_list = (request, response) => {
 };
 
 /**
+ * Display detail page for a specific genre.
+ */
+exports.genre_detail = (request, response) => {
+  response.send(`NOT IMPLEMENTED: Genre detail:  ${request.params.id}`);
+};
+
+/**
  * Display genre create form on GET.
  */
 exports.genre_create_get = (request, response) => {
