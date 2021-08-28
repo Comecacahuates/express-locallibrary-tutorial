@@ -156,19 +156,25 @@ router.get("/genres", genre_controller.genre_list);
  * GET request for creating a book instance.
  * This must come before routes for book instance id.
  */
-router.get("/bookinstance/create", book_instance_controller.book_create_post);
+router.get(
+  "/bookinstance/create",
+  book_instance_controller.bookinstance_create_get
+);
 
 /**
  * POST request for creating a book instance.
  */
-router.get("/bookinstance/create", book_instance_controller.book_create_post);
+router.get(
+  "/bookinstance/create",
+  book_instance_controller.bookinstance_create_post
+);
 
 /**
  * GET request to delete book instance.
  */
 router.get(
   "/bookinstance/:id/delete",
-  book_instance_controller.book_delete_get
+  book_instance_controller.bookinstance_delete_get
 );
 
 /**
@@ -176,7 +182,7 @@ router.get(
  */
 router.post(
   "/bookinstance/:id/delete",
-  book_instance_controller.book_delete_post
+  book_instance_controller.bookinstance_delete_post
 );
 
 /**
@@ -184,7 +190,7 @@ router.post(
  */
 router.get(
   "/bookinstance/:id/update",
-  book_instance_controller.book_update_get
+  book_instance_controller.bookinstance_update_get
 );
 
 /**
@@ -192,13 +198,13 @@ router.get(
  */
 router.post(
   "/bookinstance/:id/update",
-  book_instance_controller.book_update_post
+  book_instance_controller.bookinstance_update_post
 );
 
 /**
  * GET request for one book instance.
  */
-router.get("/bookinstance/:id", book_instance_controller.book_detail);
+router.get("/bookinstance/:id", book_instance_controller.bookinstance_detail);
 
 /**
  * GET request for list of all book instances.

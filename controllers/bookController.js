@@ -16,7 +16,7 @@ exports.book_list = (request, response) => {
  * Display detail page for a specific book.
  */
 exports.book_detail = (request, response) => {
-  response.send(`NOT IMPLEMENTED: Book detaol: ${request.params.id}`);
+  response.send(`NOT IMPLEMENTED: Book detail: ${request.params.id}`);
 };
 
 /**
