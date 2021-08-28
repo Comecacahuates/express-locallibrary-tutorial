@@ -1,17 +1,55 @@
 const Genre = require("../models/genre");
+const Book = require("../models/book");
+const async = require("async");
 
 /**
  * Display list of all genres.
  */
-exports.genre_list = (request, response) => {
-  response.send("NOT IMPLEMENTED: Genre list");
+exports.genre_list = (request, response, next) => {
+  Genre.find()
+    .sort([["name", "ascending"]])
+    .exec((error, genre_list) => {
+      if (error) {
+        return next(error);
+      }
+      response.render("genre_list", {
+        title: "Genre List",
+        genre_list,
+      });
+    });
 };
 
 /**
  * Display detail page for a specific genre.
  */
-exports.genre_detail = (request, response) => {
-  response.send(`NOT IMPLEMENTED: Genre detail:  ${request.params.id}`);
+exports.genre_detail = (request, response, next) => {
+  async.parallel(
+    {
+      genre: (callback) => {
+        Genre.findById(request.params.id).exec(callback);
+      },
+
+      genre_books: (callback) => {
+        Book.find({ genre: request.params.id }).exec(callback);
+      },
+    },
+
+    (error, results) => {
+      if (error) {
+        return next(error);
+      }
+      if (results.genre === null) {
+        const error = new Error("Genre not found");
+        error.status = 404;
+        return next(error);
+      }
+      response.render("genre_detail", {
+        title: "Genre Detail",
+        genre: results.genre,
+        genre_books: results.genre_books,
+      });
+    }
+  );
 };
 
 /**
