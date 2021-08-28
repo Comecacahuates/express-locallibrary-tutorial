@@ -1,10 +1,21 @@
+const { nextTick } = require("async");
 const Author = require("../models/author");
 
 /**
  * Display list of all authors.
  */
 exports.author_list = (request, response) => {
-  response.send("NOT IMPLEMENTED: Author list");
+  Author.find()
+    .sort([["familiy_name", "ascending"]])
+    .exec((error, author_list) => {
+      if (error) {
+        return nextTick(error);
+      }
+      response.render("author_list", {
+        title: "Author List",
+        author_list,
+      });
+    });
 };
 
 /**
