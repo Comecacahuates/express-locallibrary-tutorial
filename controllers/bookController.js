@@ -5,6 +5,9 @@ const BookInstance = require("../models/bookinstance");
 
 const async = require("async");
 
+/**
+ * Display home page.
+ */
 exports.index = (request, response) => {
   async.parallel(
     {
@@ -37,8 +40,18 @@ exports.index = (request, response) => {
 /**
  * Display list of all books.
  */
-exports.book_list = (request, response) => {
-  response.send("NOT IMPLEMENTED: Book list");
+exports.book_list = (request, response, next) => {
+  Book.find({}, "title author")
+    .populate("author")
+    .exec((error, book_list) => {
+      if (error) {
+        return next(error);
+      }
+      response.render("book_list", {
+        title: "Book List",
+        book_list: book_list,
+      });
+    });
 };
 
 /**
