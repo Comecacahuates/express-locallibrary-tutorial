@@ -46,8 +46,7 @@ exports.genre_detail = (request, response, next) => {
       }
       response.render("genre_detail", {
         title: "Genre Detail",
-        genre: results.genre,
-        genre_books: results.genre_books,
+        ...results,
       });
     }
   );
@@ -72,18 +71,18 @@ exports.genre_create_post = [
     // Extract the validation errors from a request.
     const errors = validationResult(request);
 
-    // Create a genre object with escaped and trimmed data.
-    const genre = new Genre({ name: request.body.name });
-
     // If there are errors, render form again with sanitized values and error messages.
     if (!errors.isEmpty()) {
       response.render("genre_form", {
         title: "Create Genre",
+        genre: request.body,
         errors: errors.array(),
-        genre,
       });
       return;
     }
+
+    // Create a genre object with escaped and trimmed data.
+    const genre = new Genre({ ...request.body });
 
     // If data from form is valid, check if genre with same name already exists.
     Genre.findOne({ name: request.body.name }).exec((error, found_genre) => {

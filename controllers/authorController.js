@@ -1,6 +1,7 @@
 const async = require("async");
 const Author = require("../models/author");
 const Book = require("../models/book");
+const { body, validationResult } = require("express-validator");
 
 /**
  * Display list of all authors.
@@ -54,15 +55,64 @@ exports.author_detail = (request, response, next) => {
  * Display author create form on GET.
  */
 exports.author_create_get = (request, response) => {
-  response.send("NOT IMPLEMENTED: Author create GET");
+  response.render("author_form", { title: "Create Author" });
 };
 
 /**
  * Handle author create on POST.
  */
-exports.author_create_post = (request, response) => {
-  response.send("NOT IMPLEMENTED: Author create POST");
-};
+exports.author_create_post = [
+  // Validate and sanitize fields.
+  body("first_name")
+    .trim()
+    .isLength({ min: 1 })
+    .escape()
+    .withMessage("First name must be specified")
+    .isAlphanumeric()
+    .withMessage("First name has non-alphanumeric characters"),
+  body("family_name")
+    .trim()
+    .isLength({ min: 1 })
+    .escape()
+    .withMessage("First name must be specified")
+    .isAlphanumeric()
+    .withMessage("First name has non-alphanumeric characters"),
+  body("date_of_birth", "Invalid date of birth")
+    .optional({ checkFalsy: true })
+    .isISO8601()
+    .toDate(),
+  body("date_of_death", "Invalid date of death")
+    .optional({ checkFalsy: true })
+    .isISO8601()
+    .toDate(),
+
+  // Process request after validation and sanitization.
+  (request, response, next) => {
+    // Extract the validation errors from a request.
+    const errors = validationResult(request);
+
+    // If there are errors, render form again with sanitized values and error messages.
+    if (!errors.isEmpty()) {
+      response.render("author_form", {
+        title: "Create Author",
+        author: request.body,
+        errors: errors.array(),
+      });
+      return;
+    }
+
+    // Create an author object with escaped and trimmed data.
+    const author = new Author({ ...request.body });
+
+    author.save((error) => {
+      if (error) {
+        return next(error);
+      }
+
+      response.redirect(author.url);
+    });
+  },
+];
 
 /**
  * Display author delete form on GET.
