@@ -20,8 +20,23 @@ exports.bookinstance_list = (request, response, next) => {
 /**
  * Display detail page for a specific book instance.
  */
-exports.bookinstance_detail = (request, response) => {
-  response.send(`NOT IMPLEMENTED: BookInstance detail: ${request.params.id}`);
+exports.bookinstance_detail = (request, response, next) => {
+  BookInstance.findById(request.params.id)
+    .populate("book")
+    .exec((error, bookinstance) => {
+      if (error) {
+        return next(error);
+      }
+      if (bookinstance === null) {
+        const error = new Error("Book copy not found");
+        error.status = 404;
+        return next(error);
+      }
+      response.render("bookinstance_detail", {
+        title: `Copy: ${bookinstance.book.title}`,
+        bookinstance,
+      });
+    });
 };
 
 /**

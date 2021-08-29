@@ -81,7 +81,6 @@ exports.book_detail = (request, response, next) => {
         error.status = 404;
         return next(error);
       }
-      console.log(results);
       response.render("book_detail", {
         title: results.book.title,
         book: results.book,
