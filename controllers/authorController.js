@@ -2,6 +2,7 @@ const async = require("async");
 const Author = require("../models/author");
 const Book = require("../models/book");
 const { body, validationResult } = require("express-validator");
+const { replaceOne } = require("../models/author");
 
 /**
  * Display list of all authors.
@@ -118,14 +119,61 @@ exports.author_create_post = [
  * Display author delete form on GET.
  */
 exports.author_delete_get = (request, response) => {
-  response.send("NOT IMPLEMENTED: Author delete GET");
+  async.parallel(
+    {
+      author: (callback) => Author.findById(request.params.id).exec(callback),
+
+      author_books: (callback) =>
+        Book.find({ author: request.params.id }).exec(callback),
+    },
+    (error, results) => {
+      if (error) {
+        return next(error);
+      }
+      if (results.author === null) {
+        response.redirect("/catalog/authors");
+        return;
+      }
+      response.render("author_delete", { title: "Delete Author", ...results });
+    }
+  );
 };
 
 /**
  * Handle author delete on POST.
  */
-exports.author_delete_post = (request, response) => {
-  response.send("NOT IMPLEMENTED: Author delete POST");
+exports.author_delete_post = (request, response, next) => {
+  async.parallel(
+    {
+      author: (callback) =>
+        Author.findById(request.body.authorid).exec(callback),
+
+      author_books: (callback) =>
+        Book.find({ author: request.body.authorid }).exec(callback),
+    },
+
+    (error, results) => {
+      if (error) {
+        return next(error);
+      }
+      // If author has books, render same as GET route.
+      if (results.author_books.length > 0) {
+        response.render("author_delete", {
+          title: "Delete Author",
+          ...results,
+        });
+        return;
+      }
+
+      // Delete author if has no books
+      Author.findByIdAndRemove(request.body.authorid, (error) => {
+        if (error) {
+          return next(error);
+        }
+        response.redirect("/catalog/authors");
+      });
+    }
+  );
 };
 
 /**
