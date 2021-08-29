@@ -143,7 +143,7 @@ exports.book_create_post = [
   (request, response, next) => {
     // Extract the validation errors from a request.
     const errors = validationResult(request);
-    console.log(request.body);
+
     // If there are errors, render form again with sanitized values and error messages.
     if (!errors.isEmpty()) {
       // Get all authors and genres for form.

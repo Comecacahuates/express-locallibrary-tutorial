@@ -1,4 +1,6 @@
 const BookInstance = require("../models/bookinstance");
+const Book = require("../models/book");
+const { body, validationResult } = require("express-validator");
 
 /**
  * Display list of all book instances.
@@ -42,16 +44,64 @@ exports.bookinstance_detail = (request, response, next) => {
 /**
  * Display book instance create form on GET.
  */
-exports.bookinstance_create_get = (request, response) => {
-  response.send("NOT IMPLEMENTED: BookInstance create GET");
+exports.bookinstance_create_get = (request, response, next) => {
+  Book.find({}, "title").exec((error, books) => {
+    if (error) {
+      return next(error);
+    }
+    response.render("bookinstance_form", {
+      title: "Create BokkOnstance",
+      books,
+    });
+  });
 };
 
 /**
  * Handle book instance create on POST.
  */
-exports.bookinstance_create_post = (request, response) => {
-  response.send("NOT IMPLEMENTED: BookInstance create POST");
-};
+exports.bookinstance_create_post = [
+  // Validate and sanitise fields.
+  body("book", "Book must be specified").trim().isLength({ min: 1 }).escape(),
+  body("imprint", "Imprint must be specified")
+    .trim()
+    .isLength({ min: 1 })
+    .escape(),
+  body("status").escape(),
+  body("due_back", "Invalid date").optional({ checkFalsy: true }),
+
+  // Process request after validation and sanitization.
+  (request, response, next) => {
+    // Extract the validation errors from a request.
+    const errors = validationResult(request);
+
+    // If there are errors, render form again with sanitized values and error messages.
+    if (!errors.isEmpty()) {
+      Book.find({}, "title").exec((error, books) => {
+        if (error) {
+          return next(error);
+        }
+        response.render("bookinstance_form", {
+          title: "Create BookInstance",
+          ...request.body,
+          selected_book: request.body.book._id,
+          books,
+          errors: errors.array(),
+        });
+      });
+      return;
+    }
+
+    // Create a book instance object with escaped and trimed data.
+    const bookinstance = new BookInstance({ ...request.body });
+
+    bookinstance.save((error) => {
+      if (error) {
+        return next(error);
+      }
+      response.redirect(bookinstance.url);
+    });
+  },
+];
 
 /**
  * Display book instance delete form on GET.

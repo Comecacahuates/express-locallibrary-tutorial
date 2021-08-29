@@ -164,7 +164,7 @@ router.get(
 /**
  * POST request for creating a book instance.
  */
-router.get(
+router.post(
   "/bookinstance/create",
   book_instance_controller.bookinstance_create_post
 );
