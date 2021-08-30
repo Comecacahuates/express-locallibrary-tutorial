@@ -161,7 +161,7 @@ exports.book_create_post = [
 
           // Mark selected genres as checked.
           results.genres.forEach((genre, i) => {
-            if (request.body.genres.indexOf(results.genres[i]._id)) {
+            if (request.body.genres.indexOf(genre._id)) {
               results.genres[i].checked = true;
             }
           });
@@ -179,7 +179,6 @@ exports.book_create_post = [
 
     // Create a book object with escaped and trimed data.
     const book = new Book({ ...request.body });
-
     book.save((error) => {
       if (error) {
         return next(error);
@@ -257,14 +256,125 @@ exports.book_delete_post = (request, response, next) => {
 /**
  * Display book update form on GET.
  */
+exports.book_update_get = (request, response, next) => {
+  // Get book, authors and genres for form.
+  async.parallel(
+    {
+      book: (callback) =>
+        Book.findById(request.params.id)
+          .populate("author")
+          .populate("genres")
+          .exec(callback),
 
-exports.book_update_get = (request, response) => {
-  response.send("NOT IMPLEMENTED: Book update GET");
+      authors: (callback) => Author.find(callback),
+
+      genres: (callback) => Genre.find(callback),
+    },
+
+    (error, results) => {
+      if (error) {
+        return next(error);
+      }
+      if (results.book === null) {
+        const error = new Error("Book not found");
+        error.status = 404;
+        return next(error);
+      }
+      // Mark selected genres as checked.
+      results.genres.forEach((genre, i) =>
+        results.book.genres.forEach(
+          (bookGenre) =>
+            (results.genres[i].checked =
+              genre._id.toString() === bookGenre._id.toString())
+        )
+      );
+      response.render("book_form", {
+        title: "Update Book",
+        ...results,
+      });
+    }
+  );
 };
 
 /**
  * Handle book updateon POST.
  */
-exports.book_update_post = (request, response) => {
-  response.send("NOT IMPLEMENTED: Book update POST");
-};
+exports.book_update_post = [
+  // Convert the genre to an array.
+  (request, response, next) => {
+    if (!(request.body.genres instanceof Array)) {
+      if (typeof request.body.genres === "undefined") {
+        request.body.genres = [];
+      } else {
+        request.body.genres = new Array(request.body.genres);
+      }
+    }
+    next();
+  },
+
+  // Validate and sanitise fields.
+  body("title", "Title must not be empty.")
+    .trim()
+    .isLength({ min: 1 })
+    .escape(),
+  body("author", "Author must not be empty.")
+    .trim()
+    .isLength({ min: 1 })
+    .escape(),
+  body("summary", "Summary must not be empty.")
+    .trim()
+    .isLength({ min: 1 })
+    .escape(),
+  body("isbn", "ISBN must not be empty.").trim().isLength({ min: 1 }).escape(),
+  body("genres.*").escape(),
+
+  // Process request after validation and sanitisation.
+  (request, response, next) => {
+    // Extract the validation error from a request.
+    const errors = validationResult(request);
+
+    // If there are errors, render form again with sanitized values and error messages.
+    if (!errors.isEmpty()) {
+      async.parallel(
+        {
+          authors: (callback) => Author.find(callback),
+
+          genres: (callback) => Genre.find(callback),
+        },
+
+        (error, results) => {
+          if (error) {
+            return next(error);
+          }
+
+          // Mark selected genres as checked.
+          results.genres.forEach((genre, i) => {
+            if (request.body.genres.indexOf(genre.id) > -1) {
+              results.genres[i].checked = true;
+            }
+          });
+          response.render("book_form", {
+            title: "Update Book",
+            ...results,
+            ...request.body,
+            _id: request.params.id, // Required or a new ID will be assigned.
+            errors: errors.array(),
+          });
+        }
+      );
+      return;
+    }
+
+    // Create a book object with escaped and trimed data.
+    const book = new Book({
+      _id: request.params.id,
+      ...request.body,
+    });
+    Book.findByIdAndUpdate(book._id, book, {}, (error, book) => {
+      if (error) {
+        return next(error);
+      }
+      response.redirect(book.url);
+    });
+  },
+];
