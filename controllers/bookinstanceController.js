@@ -84,7 +84,7 @@ exports.bookinstance_create_post = [
         }
         response.render("bookinstance_form", {
           title: "Create Book Instance",
-          ...request.body,
+          bookinstance: request.body,
           selected_book: request.body.book._id,
           books,
           errors: errors.array(),
