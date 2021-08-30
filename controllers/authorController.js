@@ -182,13 +182,76 @@ exports.author_delete_post = (request, response, next) => {
 /**
  * Display author update on GET.
  */
-exports.author_update_get = (request, response) => {
-  response.send("NOT IMPLEMENTED: Author update GET");
+exports.author_update_get = (request, response, next) => {
+  Author.findById(request.params.id).exec((error, author) => {
+    if (error) {
+      return next(error);
+    }
+    if (author === null) {
+      const error = new Error("Author not found");
+      error.status = 404;
+      return next(error);
+    }
+    response.render("author_form", {
+      title: "Update author",
+      author,
+    });
+  });
 };
 
 /**
  *  Handle author update on POST.
  */
-exports.author_update_post = (request, response) => {
-  response.send("NOT IMPLEMENTED: Author update POST");
-};
+exports.author_update_post = [
+  // Validate and sanitize fields.
+  body("first_name")
+    .trim()
+    .isLength({ min: 1 })
+    .escape()
+    .withMessage("First name must be specified")
+    .isAlphanumeric()
+    .withMessage("First name has non-alphanumeric characters"),
+  body("family_name")
+    .trim()
+    .isLength({ min: 1 })
+    .escape()
+    .withMessage("First name must be specified")
+    .isAlphanumeric()
+    .withMessage("First name has non-alphanumeric characters"),
+  body("date_of_birth", "Invalid date of birth")
+    .optional({ checkFalsy: true })
+    .isISO8601()
+    .toDate(),
+  body("date_of_death", "Invalid date of death")
+    .optional({ checkFalsy: true })
+    .isISO8601()
+    .toDate(),
+
+  // Process request after validation and sanitization.
+  (request, response, next) => {
+    // Extract the validation errors from a request.
+    const errors = validationResult(request);
+
+    // If there are errors, render form again with sanitized values and error messages.
+    if (!errors.isEmpty()) {
+      response.render("author_form", {
+        title: "Create Author",
+        author: request.body,
+        errors: errors.array(),
+      });
+      return;
+    }
+
+    // Create a book object with escaped and trimed data.
+    const author = new Author({
+      _id: request.params.id,
+      ...request.body,
+    });
+    Author.findByIdAndUpdate(author._id, author, {}, (error, author) => {
+      if (error) {
+        return next(error);
+      }
+      response.redirect(author.url);
+    });
+  },
+];
