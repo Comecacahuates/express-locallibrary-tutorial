@@ -165,13 +165,66 @@ exports.genre_delete_post = (request, response) => {
 /**
  * Display genre update form on GET.
  */
-exports.genre_update_get = (request, response) => {
-  response.send("NOT IMPLEMENTED: Genre update GET");
+exports.genre_update_get = (request, response, next) => {
+  Genre.findById(request.params.id).exec((error, genre) => {
+    if (error) {
+      return next(error);
+    }
+    if (genre === null) {
+      const error = new Error("Genre not found");
+      error.status = 404;
+      return next(error);
+    }
+    response.render("genre_form", {
+      title: "Update Genre",
+      genre,
+    });
+  });
 };
 
 /**
  * Handle genre update on POST.
  */
-exports.genre_update_post = (request, response) => {
-  response.send("NOT IMPLEMENTED: Genre update POST");
-};
+exports.genre_update_post = [
+  // Validate and sanitize the name field.
+  body("name", "Genre name required").trim().isLength({ min: 1 }).escape(),
+
+  // Process request after validation and sanitization.
+  (request, response, next) => {
+    // Extract the validation errors from a request.
+    const errors = validationResult(request);
+
+    // If there are errors, render form again with sanitized values and error messages.
+    if (!errors.isEmpty()) {
+      response.render("genre_form", {
+        title: "Create Genre",
+        genre: request.body,
+        errors: errors.array(),
+      });
+      return;
+    }
+
+    // Create a genre object with escaped and trimmed data.
+    const genre = new Genre({
+      _id: request.params.id,
+      ...request.body,
+    });
+
+    // If data from form is valid, check if genre with same name already exists.
+    Genre.findOne({ name: genre.name }).exec((error, found_genre) => {
+      if (error) {
+        return next();
+      }
+      if (found_genre) {
+        response.redirect(found_genre.url);
+        return;
+      }
+      Genre.findByIdAndUpdate(genre._id, genre, {}, (error, genre) => {
+        if (error) {
+          return next(error);
+        }
+        response.redirect(genre.url);
+      });
+    });
+  },
+];
