@@ -2,7 +2,6 @@ const async = require("async");
 const Author = require("../models/author");
 const Book = require("../models/book");
 const { body, validationResult } = require("express-validator");
-const { replaceOne } = require("../models/author");
 
 /**
  * Display list of all authors.
@@ -126,6 +125,7 @@ exports.author_delete_get = (request, response) => {
       author_books: (callback) =>
         Book.find({ author: request.params.id }).exec(callback),
     },
+
     (error, results) => {
       if (error) {
         return next(error);

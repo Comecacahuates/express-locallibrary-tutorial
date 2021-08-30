@@ -26,13 +26,10 @@ exports.genre_list = (request, response, next) => {
 exports.genre_detail = (request, response, next) => {
   async.parallel(
     {
-      genre: (callback) => {
-        Genre.findById(request.params.id).exec(callback);
-      },
+      genre: (callback) => Genre.findById(request.params.id).exec(callback),
 
-      genre_books: (callback) => {
-        Book.find({ genre: request.params.id }).exec(callback);
-      },
+      genre_books: (callback) =>
+        Book.find({ genres: request.params.id }).exec(callback),
     },
 
     (error, results) => {
@@ -106,15 +103,63 @@ exports.genre_create_post = [
 /**
  * Display genre delete form on GET.
  */
-exports.genre_delete_get = (request, response) => {
-  response.send("NOT IMPLEMENTED: Genre delete GET");
+exports.genre_delete_get = (request, response, next) => {
+  async.parallel(
+    {
+      genre: (callback) => Genre.findById(request.params.id).exec(callback),
+
+      genre_books: (callback) =>
+        Book.find({ genres: request.params.id }).exec(callback),
+    },
+
+    (error, results) => {
+      if (error) {
+        return enxt(error);
+      }
+      if (results.genre === null) {
+        response.redirect("/catalog/genres");
+        return;
+      }
+      response.render("genre_delete", { title: "Delete Genre", ...results });
+    }
+  );
 };
 
 /**
  * Handle genre delete on POST.
  */
 exports.genre_delete_post = (request, response) => {
-  response.send("NOT IMPLEMENTED: Genre delete POST");
+  async.parallel(
+    {
+      genre: (callback) => Genre.findById(request.body.genreid).exec(callback),
+
+      genre_books: (callback) =>
+        Book.find({ genres: request.body.genreid }).exec(callback),
+    },
+
+    (error, results) => {
+      console.log("***************************");
+      if (error) {
+        return next(callback);
+      }
+      // If genre has books, render same as GET route.
+      if (results.genre_books.length > 0) {
+        response.render("genre_delete", {
+          title: "Delete Genre",
+          ...results,
+        });
+        return;
+      }
+
+      // Delete genre if has no books
+      Genre.findByIdAndRemove(request.body.genreid, (error) => {
+        if (error) {
+          return next(error);
+        }
+        response.redirect("/catalog/genres");
+      });
+    }
+  );
 };
 
 /**
