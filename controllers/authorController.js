@@ -2,6 +2,7 @@ const async = require("async");
 const Author = require("../models/author");
 const Book = require("../models/book");
 const { body, validationResult } = require("express-validator");
+const debug = require("debug")("author");
 
 /**
  * Display list of all authors.
@@ -11,8 +12,10 @@ exports.author_list = (request, response, next) => {
     .sort([["familiy_name", "ascending"]])
     .exec((error, author_list) => {
       if (error) {
+        debug(`list error: ${error}`);
         return next(error);
       }
+      debug("test");
       response.render("author_list", {
         title: "Author List",
         author_list,
@@ -36,11 +39,13 @@ exports.author_detail = (request, response, next) => {
 
     (error, results) => {
       if (error) {
+        debug(`detail error: ${error}`);
         return next(error);
       }
       if (results.author === null) {
         const error = new Error("Author not found");
         error.status = 404;
+        debug(`author not found: ${error}`);
         return next(error);
       }
       response.render("author_detail", {
@@ -106,6 +111,7 @@ exports.author_create_post = [
 
     author.save((error) => {
       if (error) {
+        debug(`create error: ${error}`);
         return next(error);
       }
 
@@ -128,6 +134,7 @@ exports.author_delete_get = (request, response, next) => {
 
     (error, results) => {
       if (error) {
+        debug(`error getting author and books for deleting: ${error}`);
         return next(error);
       }
       if (results.author === null) {
@@ -157,6 +164,7 @@ exports.author_delete_post = (request, response, next) => {
 
     (error, results) => {
       if (error) {
+        debug(`error getting author and books for deleting: ${error}`);
         return next(error);
       }
       // If author has books, render same as GET route.
@@ -171,6 +179,7 @@ exports.author_delete_post = (request, response, next) => {
       // Delete author if has no books
       Author.findByIdAndRemove(request.body.authorid, (error) => {
         if (error) {
+          debug(`error deleting: ${error}`);
           return next(error);
         }
         response.redirect("/catalog/authors");
@@ -185,11 +194,13 @@ exports.author_delete_post = (request, response, next) => {
 exports.author_update_get = (request, response, next) => {
   Author.findById(request.params.id).exec((error, author) => {
     if (error) {
+      debug(`error checking author existance: ${error}`);
       return next(error);
     }
     if (author === null) {
       const error = new Error("Author not found");
       error.status = 404;
+      debug(`author not found: ${error}`);
       return next(error);
     }
     response.render("author_form", {
@@ -249,6 +260,7 @@ exports.author_update_post = [
     });
     Author.findByIdAndUpdate(author._id, author, {}, (error, author) => {
       if (error) {
+        debug(`error updating author: ${error}`);
         return next(error);
       }
       response.redirect(author.url);
