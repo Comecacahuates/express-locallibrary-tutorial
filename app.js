@@ -8,8 +8,11 @@ var indexRouter = require("./routes/index");
 var usersRouter = require("./routes/users");
 const catalogRouter = require("./routes/catalog");
 const compression = require("compression");
+const helmet = require("helmet");
 
 var app = express();
+
+app.use(helmet());
 
 // database connection setup
 const mongoose = require("mongoose");
