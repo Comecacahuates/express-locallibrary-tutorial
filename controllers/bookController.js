@@ -355,9 +355,9 @@ exports.book_update_post = [
           });
           response.render("book_form", {
             title: "Update Book",
-            ...results,
             ...request.body,
             _id: request.params.id, // Required or a new ID will be assigned.
+            ...results,
             errors: errors.array(),
           });
         }
