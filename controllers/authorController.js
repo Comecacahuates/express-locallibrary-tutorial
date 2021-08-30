@@ -117,7 +117,7 @@ exports.author_create_post = [
 /**
  * Display author delete form on GET.
  */
-exports.author_delete_get = (request, response) => {
+exports.author_delete_get = (request, response, next) => {
   async.parallel(
     {
       author: (callback) => Author.findById(request.params.id).exec(callback),
@@ -134,7 +134,10 @@ exports.author_delete_get = (request, response) => {
         response.redirect("/catalog/authors");
         return;
       }
-      response.render("author_delete", { title: "Delete Author", ...results });
+      response.render("author_delete", {
+        title: "Delete Author",
+        ...results,
+      });
     }
   );
 };
